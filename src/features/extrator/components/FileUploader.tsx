@@ -1,7 +1,5 @@
-import { useCallback, useState } from "react";
-import { Card } from "../../../core";
-import { Upload, Trash2, Settings2, FileCode } from "lucide-react";
-import type { CalculationMode } from "../hooks/useXmlConsolidator";
+import { useState } from "react";
+import { Upload, Trash2, Settings2 } from "lucide-react";
 
 export function FileUploader({
   isProcessing = false,
