@@ -1,46 +1,30 @@
-import { useCallback } from "react";
-import { Card } from "../../../core";
-
-type ExportButtonProps = {
-  data: unknown;
-  disabled?: boolean;
-  fileName?: string;
-};
+import { Download } from "lucide-react";
 
 export function ExportButton({
   data,
-  disabled = false,
+  disabled,
   fileName = "consolidado.json",
-}: ExportButtonProps) {
-  const handleExport = useCallback(() => {
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
+}: any) {
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = fileName;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }, [data, fileName]);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+  };
 
   return (
-    <Card className="flex items-center justify-between bg-gradient-to-r from-sky-500/15 via-indigo-500/10 to-purple-500/10">
-      <div>
-        <p className="text-sm font-semibold text-slate-100">
-          Exportar JSON consolidado
-        </p>
-        <p className="text-xs text-slate-300">
-          Baixe o payload pronto para importar em outros sistemas.
-        </p>
-      </div>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={handleExport}
-        className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:shadow-none"
-      >
-        Exportar
-      </button>
-    </Card>
+    <button
+      onClick={handleExport}
+      disabled={disabled}
+      className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-sky-500 px-8 py-4 font-bold text-white shadow-[0_20px_50px_-10px_rgba(14,165,233,0.5)] transition-all hover:scale-[1.02] hover:bg-sky-400 active:scale-95 disabled:grayscale disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+      <Download size={20} />
+      Exportar Consolidado
+    </button>
   );
 }

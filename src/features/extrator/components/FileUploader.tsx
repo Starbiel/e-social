@@ -1,14 +1,7 @@
 import { useCallback, useState } from "react";
 import { Card } from "../../../core";
+import { Upload, Trash2, Settings2, FileCode } from "lucide-react";
 import type { CalculationMode } from "../hooks/useXmlConsolidator";
-
-type FileUploaderProps = {
-  isProcessing?: boolean;
-  onFilesSelected: (files: File[]) => void;
-  onReset?: () => void;
-  mode: CalculationMode;
-  setMode: (mode: CalculationMode) => void;
-};
 
 export function FileUploader({
   isProcessing = false,
@@ -16,89 +9,92 @@ export function FileUploader({
   onReset,
   mode,
   setMode,
-}: FileUploaderProps) {
+}: any) {
   const [isDragging, setIsDragging] = useState(false);
-  const handleFiles = useCallback(
-    (fileList: FileList | null) => {
-      if (!fileList) return;
-      const files = Array.from(fileList);
-      if (files.length) {
-        onFilesSelected(files);
-      }
-    },
-    [onFilesSelected],
-  );
-
-  const onDrop = useCallback(
-    (event: React.DragEvent<HTMLLabelElement>) => {
-      event.preventDefault();
-      setIsDragging(false);
-      handleFiles(event.dataTransfer.files);
-    },
-    [handleFiles],
-  );
 
   return (
-    <Card
-      title="Upload de XMLs"
-      subtitle="Arraste e solte até 13 meses ou selecione múltiplos arquivos .xml para consolidar valores."
-      actions={
-        <div className="flex gap-2">
-          <button
-            type="button"
-            disabled={isProcessing}
-            onClick={() => onReset?.()}
-            className="rounded-xl border border-slate-700 px-3 py-1 text-sm text-slate-200 transition hover:border-slate-500 hover:text-white disabled:cursor-not-allowed disabled:border-slate-800 disabled:text-slate-500"
+    <div className="grid gap-6 lg:grid-cols-4">
+      {/* Sidebar de Configuração */}
+      <div className="lg:col-span-1 space-y-4">
+        <div className="rounded-3xl border border-white/5 bg-slate-900/40 p-6 backdrop-blur-md">
+          <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-200">
+            <Settings2 size={16} className="text-sky-400" />
+            Configuração
+          </div>
+          <div className="space-y-3">
+            <label className="text-[11px] uppercase tracking-widest text-slate-500 font-bold">
+              Modo de Cálculo
+            </label>
+            <select
+              value={mode}
+              onChange={(e) => setMode(e.target.value)}
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none"
+            >
+              <option value="official">Oficial eSocial (Líquido)</option>
+              <option value="accountant-dmdev">Visão Contador (Bruto)</option>
+            </select>
+            <button
+              onClick={() => onReset?.()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-800 py-3 text-sm font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 transition-all"
+            >
+              <Trash2 size={16} /> Limpar Tudo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Área de Drop */}
+      <div className="lg:col-span-3">
+        <label
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            onFilesSelected(Array.from(e.dataTransfer.files));
+          }}
+          className={`relative flex h-full min-h-[200px] cursor-pointer flex-col items-center justify-center gap-4 rounded-[2rem] border-2 border-dashed transition-all duration-300 ${
+            isDragging
+              ? "border-sky-500 bg-sky-500/10 scale-[0.99]"
+              : "border-slate-800 bg-slate-900/20 hover:border-slate-600 hover:bg-slate-900/40"
+          }`}
+        >
+          <input
+            type="file"
+            multiple
+            accept=".xml"
+            className="hidden"
+            onChange={(e) => onFilesSelected(Array.from(e.target.files || []))}
+          />
+
+          <div
+            className={`rounded-2xl p-4 transition-transform duration-500 ${isDragging ? "rotate-12 scale-110" : ""} bg-slate-800 text-sky-400 shadow-xl`}
           >
-            Limpar
-          </button>
-        </div>
-      }
-    >
-      <select
-        value={mode}
-        onChange={(e) => setMode(e.target.value as CalculationMode)}
-        className="mb-4 rounded-md border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-900"
-      >
-        <option value="official">Oficial eSocial (Líquido)</option>
-        <option value="accountant-dmdev">Visão Contador (Bruto/Folha)</option>
-      </select>
-      <label
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={onDrop}
-        className={`flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 text-center transition focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-900 ${
-          isDragging
-            ? "border-sky-400 bg-sky-500/5"
-            : "border-slate-700 bg-slate-900/40"
-        } ${isProcessing ? "opacity-70" : "hover:border-slate-500 hover:bg-slate-900"}`}
-      >
-        <div className="flex items-center gap-3">
-          <span className="rounded-full bg-sky-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-sky-300">
-            XML
-          </span>
-          <span className="text-sm text-slate-300">S-1210 / S-5002</span>
-        </div>
-        <p className="text-xl font-semibold text-slate-100">
-          Solte seus arquivos aqui
-        </p>
-        <p className="max-w-xl text-sm text-slate-400">
-          Aceitamos múltiplos XMLs com ou sem namespaces. O consolidado soma
-          rendimentos, INSS e IRRF considerando múltiplos vínculos dentro de
-          cada arquivo.
-        </p>
-        <input
-          type="file"
-          accept=".xml,text/xml"
-          multiple
-          disabled={isProcessing}
-          onChange={(e) => handleFiles(e.target.files)}
-          className="hidden"
-        />
-      </label>
-    </Card>
+            <Upload size={32} />
+          </div>
+
+          <div className="text-center">
+            <p className="text-xl font-bold text-white">
+              Arraste seus XMLs aqui
+            </p>
+            <p className="text-sm text-slate-400 mt-1">
+              S-1210 e S-5002 • Até 50 arquivos simultâneos
+            </p>
+          </div>
+
+          {isProcessing && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-[2rem] bg-slate-950/80 backdrop-blur-sm">
+              <div className="flex items-center gap-3 font-medium text-sky-400">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-sky-500 border-t-transparent" />
+                Processando arquivos...
+              </div>
+            </div>
+          )}
+        </label>
+      </div>
+    </div>
   );
 }

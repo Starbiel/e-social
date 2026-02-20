@@ -17,8 +17,8 @@ import type {
 ========================= */
 
 export type CalculationMode =
-  | "official" // consolidApurMen (valor oficial enviado ao eSocial)
-  | "accountant-dmdev"; // soma cada dmDev como na planilha
+  | "official" // Resumo do governo (líquido)
+  | "accountant-dmdev"; // Soma por holerite (bruto/magnitude)
 
 /* =========================
    LÓGICA CONTÁBIL (POR dmDev)
@@ -26,7 +26,6 @@ export type CalculationMode =
 
 function extractAccountantDmDev(doc: Document): ConsolidatedTotals {
   const totals = createEmptyTotals();
-
   const dmDevNodes = Array.from(doc.getElementsByTagName("dmDev"));
 
   for (const dmDev of dmDevNodes) {
@@ -41,11 +40,12 @@ function extractAccountantDmDev(doc: Document): ConsolidatedTotals {
     // Rendimentos → soma normal
     totals.vlrRendTrib += getCents("vlrRendTrib");
     totals.vlrRendTrib13 += getCents("vlrRendTrib13");
+    totals.vlrAbonoPec += Math.abs(getCents("vlrAbonoPec"));
+    totals.vlrIndResContrato += Math.abs(getCents("vlrIndResContrato"));
 
-    // INSS / IRRF → contador soma magnitude da movimentação
+    // INSS / IRRF → Soma a magnitude para bater com os R$ 1.169,52 de 02/25
     totals.vlrPrevOficial += Math.abs(getCents("vlrPrevOficial"));
     totals.vlrPrevOficial13 += Math.abs(getCents("vlrPrevOficial13"));
-
     totals.vlrCRMen += Math.abs(getCents("vlrCRMen"));
     totals.vlrCR13Men += Math.abs(getCents("vlrCR13Men"));
   }
@@ -59,7 +59,6 @@ function extractAccountantDmDev(doc: Document): ConsolidatedTotals {
 
 function extractOfficial(doc: Document): ConsolidatedTotals {
   const totals = createEmptyTotals();
-
   const consolidNode = Array.from(doc.getElementsByTagName("*")).find(
     (el) => el.localName === "consolidApurMen",
   );
@@ -108,12 +107,10 @@ export function useXmlConsolidator() {
           ? extractOfficial(doc)
           : extractAccountantDmDev(doc);
 
-      const hasData = Object.values(totals).some((v) => v !== 0);
-
       return {
         fileName: file.name,
         totals,
-        hasData,
+        hasData: Object.values(totals).some((v) => v !== 0),
       };
     },
     [],
@@ -159,13 +156,12 @@ export function useXmlConsolidator() {
     const format = (cents: number) => centsToNumber(cents);
 
     return {
-      configuracao: {
-        modo: mode,
-        geradoEm: new Date().toISOString(),
-      },
+      configuracao: { modo: mode, geradoEm: new Date().toISOString() },
       totais: {
         rendimento_tributavel: format(summary.totals.vlrRendTrib),
         rendimento_13: format(summary.totals.vlrRendTrib13),
+        abono_pecuniario: format(summary.totals.vlrAbonoPec),
+        rescisao_indenizada: format(summary.totals.vlrIndResContrato),
         inss_total: format(
           summary.totals.vlrPrevOficial + summary.totals.vlrPrevOficial13,
         ),
@@ -189,10 +185,6 @@ export function useXmlConsolidator() {
     setMode,
     exportPayload,
     reset: () =>
-      setSummary({
-        totals: createEmptyTotals(),
-        files: [],
-        errors: [],
-      }),
+      setSummary({ totals: createEmptyTotals(), files: [], errors: [] }),
   };
 }

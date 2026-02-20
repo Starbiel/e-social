@@ -57,6 +57,8 @@ export function createEmptyTotals(): ConsolidatedTotals {
     vlrPrevOficial13: 0,
     vlrCRMen: 0,
     vlrCR13Men: 0,
+    vlrAbonoPec: 0,
+    vlrIndResContrato: 0,
   };
 }
 
@@ -71,5 +73,7 @@ export function mergeTotals(
     vlrPrevOficial13: base.vlrPrevOficial13 + delta.vlrPrevOficial13,
     vlrCRMen: base.vlrCRMen + delta.vlrCRMen,
     vlrCR13Men: base.vlrCR13Men + delta.vlrCR13Men,
+    vlrAbonoPec: base.vlrAbonoPec + delta.vlrAbonoPec,
+    vlrIndResContrato: base.vlrIndResContrato + delta.vlrIndResContrato,
   };
 }
