@@ -7,7 +7,8 @@ export default function AboutScreen() {
         <code>consolidApurMen</code> usando DOMParser nativo e soma rendimentos,
         INSS e IRRF considerando múltiplos vínculos dentro do mesmo arquivo. O
         objetivo é gerar um JSON limpo e pronto para alimentar planilhas ou
-        integrações.
+        integrações. Feito por mim, Gabriel, para uso pessoal e compartilhamento
+        com a comunidade e meu amorzinho. O código está disponível no Github,
       </p>
     </div>
   );

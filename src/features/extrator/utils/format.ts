@@ -52,13 +52,33 @@ export function formatCurrency(value: number): string {
 export function createEmptyTotals(): ConsolidatedTotals {
   return {
     vlrRendTrib: 0,
-    vlrRendTrib13: 0,
     vlrPrevOficial: 0,
-    vlrPrevOficial13: 0,
+    vlrPrevCompl: 0,
     vlrCRMen: 0,
+    vlrRendTrib13: 0,
+    vlrPrevOficial13: 0,
     vlrCR13Men: 0,
-    vlrAbonoPec: 0,
+    vlrParcIsenta65: 0,
+    vlrParcIsenta65Dec: 0,
+    vlrDiarias: 0,
+    vlrAjudaCusto: 0,
     vlrIndResContrato: 0,
+    vlrAbonoPec: 0,
+    vlrRendMoleGrave: 0,
+    vlrRendMoleGrave13: 0,
+    vlrAuxMoradia: 0,
+    vlrBolsaMedico: 0,
+    vlrBolsaMedico13: 0,
+    vlrJurosMora: 0,
+    vlrIsenOutros: 0,
+    vlrDedDep: 0,
+    vlrDedPenAlim: 0,
+    vlrRendRRA: 0,
+    vlrPrevOficialRRA: 0,
+    vlrDedPenAlimRRA: 0,
+    vlrCRRRA: 0,
+    vlrDespJudRRA: 0,
+    qtdMesesRRA: 0,
   };
 }
 
@@ -66,14 +86,10 @@ export function mergeTotals(
   base: ConsolidatedTotals,
   delta: ConsolidatedTotals,
 ): ConsolidatedTotals {
-  return {
-    vlrRendTrib: base.vlrRendTrib + delta.vlrRendTrib,
-    vlrRendTrib13: base.vlrRendTrib13 + delta.vlrRendTrib13,
-    vlrPrevOficial: base.vlrPrevOficial + delta.vlrPrevOficial,
-    vlrPrevOficial13: base.vlrPrevOficial13 + delta.vlrPrevOficial13,
-    vlrCRMen: base.vlrCRMen + delta.vlrCRMen,
-    vlrCR13Men: base.vlrCR13Men + delta.vlrCR13Men,
-    vlrAbonoPec: base.vlrAbonoPec + delta.vlrAbonoPec,
-    vlrIndResContrato: base.vlrIndResContrato + delta.vlrIndResContrato,
-  };
+  const merged = { ...base };
+  for (const key in base) {
+    const k = key as keyof ConsolidatedTotals;
+    merged[k] = base[k] + delta[k];
+  }
+  return merged;
 }

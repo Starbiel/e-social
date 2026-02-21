@@ -1,10 +1,20 @@
+import { useEffect, useRef, useState } from "react";
 import { ExportButton } from "../components/ExportButton";
 import { FileUploader } from "../components/FileUploader";
+import {
+  InformeDataForm,
+  type InformeFormData,
+} from "../components/InformeDataForm";
 import { SummaryDisplay } from "../components/SummaryDisplay";
 import { useXmlConsolidator } from "../hooks/useXmlConsolidator";
+import { GeneratePdfButton } from "../components/GeneratePdfButton";
+import { Printer } from "lucide-react";
+import { InformeTemplate } from "../components/InformeTemplate";
+import { useReactToPrint } from "react-to-print";
 
 export default function ExtratorPage() {
   const {
+    identification,
     totals,
     files,
     errors,
@@ -16,42 +26,49 @@ export default function ExtratorPage() {
     setMode,
   } = useXmlConsolidator();
 
+  const [formData, setFormData] = useState<InformeFormData>({
+    ano_calendario: new Date().getFullYear().toString(),
+    fonte_cnpj: "",
+    fonte_nome: "",
+    beneficiario_cpf: "",
+    beneficiario_nome: "",
+    q7_informacoes_complementares: "", // Inicia vazio
+    q8_responsavel_nome: "",
+    q8_data: new Date().toISOString().split("T")[0],
+  });
+
+  const handleFormChange = (field: keyof InformeFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  useEffect(() => {
+    if (!identification) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      fonte_cnpj: identification.fonteDocumento || prev.fonte_cnpj,
+      beneficiario_cpf: identification.beneficiarioCpf || prev.beneficiario_cpf,
+      ano_calendario: identification.anoCalendario || prev.ano_calendario,
+    }));
+  }, [identification]);
+
+  // 1. Criamos a referência que aponta para o template oculto
+  const printRef = useRef<HTMLDivElement>(null);
+
+  // 2. Configuramos o hook do react-to-print
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Informe_Rendimentos_${formData.ano_calendario}_${formData.beneficiario_nome || "Funcionario"}`,
+  });
+
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black p-4 md:p-8">
       <div className="mx-auto max-w-7xl space-y-10">
-        {/* Header Profissional */}
-        <header className="relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 p-8 backdrop-blur-xl">
-          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-500/10 blur-[80px]" />
-          <div className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-purple-500/10 blur-[80px]" />
+        {/* Seu Header existente... */}
 
-          <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2 rounded-full bg-sky-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-400 border border-sky-500/20">
-                  S-1210 / S-5002
-                </div>
-                <span className="rounded-full bg-slate-800 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  v2.0 Stable
-                </span>
-              </div>
-              <div className="space-y-1">
-                <h1 className="text-4xl font-extrabold tracking-tight text-white md:text-5xl">
-                  Consolidador{" "}
-                  <span className="bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
-                    eSocial
-                  </span>
-                </h1>
-                <p className="max-w-2xl text-lg text-slate-400 leading-relaxed">
-                  Transforme múltiplos XMLs em dados estratégicos. Soma
-                  automatizada de rendimentos, retenções e bases de cálculo.
-                </p>
-              </div>
-            </div>
-          </div>
-        </header>
+        <div className="grid gap-8 pb-20">
+          <InformeDataForm formData={formData} onChange={handleFormChange} />
 
-        {/* Grid Principal */}
-        <div className="grid gap-8">
           <FileUploader
             isProcessing={isProcessing}
             onFilesSelected={processFiles}
@@ -66,16 +83,34 @@ export default function ExtratorPage() {
             errors={errors}
             exportPayload={exportPayload}
           />
+        </div>
 
-          {files.length > 0 && (
-            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-md px-4 z-50">
+        {/* 3. O Componente invisível aguardando a impressão */}
+        <InformeTemplate ref={printRef} formData={formData} totals={totals} />
+
+        {/* Botões Inferiores */}
+        {files.length > 0 && (
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-50 flex gap-4">
+            <div className="flex-1">
               <ExportButton
                 data={exportPayload}
                 disabled={!files.length || isProcessing}
+                fileName="dados-consolidados.json"
               />
             </div>
-          )}
-        </div>
+            <div className="flex-1">
+              <button
+                onClick={() => handlePrint()}
+                disabled={!files.length || isProcessing}
+                className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-emerald-600 px-8 py-4 font-bold text-white shadow-[0_20px_50px_-10px_rgba(16,185,129,0.5)] transition-all hover:scale-[1.02] hover:bg-emerald-500 active:scale-95 disabled:grayscale disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                <Printer size={20} />
+                Gerar PDF (Print)
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
