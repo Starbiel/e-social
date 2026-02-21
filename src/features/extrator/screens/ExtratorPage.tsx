@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ExportButton } from "../components/ExportButton";
 import { FileUploader } from "../components/FileUploader";
 import {
@@ -7,7 +7,6 @@ import {
 } from "../components/InformeDataForm";
 import { SummaryDisplay } from "../components/SummaryDisplay";
 import { useXmlConsolidator } from "../hooks/useXmlConsolidator";
-import { GeneratePdfButton } from "../components/GeneratePdfButton";
 import { Printer } from "lucide-react";
 import { InformeTemplate } from "../components/InformeTemplate";
 import { useReactToPrint } from "react-to-print";
@@ -15,6 +14,7 @@ import { useReactToPrint } from "react-to-print";
 export default function ExtratorPage() {
   const {
     identification,
+    allDependents,
     totals,
     files,
     errors,
@@ -26,13 +26,13 @@ export default function ExtratorPage() {
     setMode,
   } = useXmlConsolidator();
 
+  console.log("Identification:", identification);
+
   const [formData, setFormData] = useState<InformeFormData>({
     ano_calendario: new Date().getFullYear().toString(),
     fonte_cnpj: "",
     fonte_nome: "",
-    beneficiario_cpf: "",
     beneficiario_nome: "",
-    q7_informacoes_complementares: "", // Inicia vazio
     q8_responsavel_nome: "",
     q8_data: new Date().toISOString().split("T")[0],
   });
@@ -40,17 +40,6 @@ export default function ExtratorPage() {
   const handleFormChange = (field: keyof InformeFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
-
-  useEffect(() => {
-    if (!identification) return;
-
-    setFormData((prev) => ({
-      ...prev,
-      fonte_cnpj: identification.fonteDocumento || prev.fonte_cnpj,
-      beneficiario_cpf: identification.beneficiarioCpf || prev.beneficiario_cpf,
-      ano_calendario: identification.anoCalendario || prev.ano_calendario,
-    }));
-  }, [identification]);
 
   // 1. Criamos a referência que aponta para o template oculto
   const printRef = useRef<HTMLDivElement>(null);
@@ -62,7 +51,7 @@ export default function ExtratorPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black p-4 md:p-8">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black p-4 md:p-8">
       <div className="mx-auto max-w-7xl space-y-10">
         {/* Seu Header existente... */}
 
@@ -86,7 +75,13 @@ export default function ExtratorPage() {
         </div>
 
         {/* 3. O Componente invisível aguardando a impressão */}
-        <InformeTemplate ref={printRef} formData={formData} totals={totals} />
+        <InformeTemplate
+          ref={printRef}
+          formData={formData}
+          totals={totals}
+          identification={identification}
+          allDependents={allDependents}
+        />
 
         {/* Botões Inferiores */}
         {files.length > 0 && (
@@ -104,7 +99,7 @@ export default function ExtratorPage() {
                 disabled={!files.length || isProcessing}
                 className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-emerald-600 px-8 py-4 font-bold text-white shadow-[0_20px_50px_-10px_rgba(16,185,129,0.5)] transition-all hover:scale-[1.02] hover:bg-emerald-500 active:scale-95 disabled:grayscale disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
+                <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]" />
                 <Printer size={20} />
                 Gerar PDF (Print)
               </button>

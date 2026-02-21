@@ -1,16 +1,19 @@
 import { forwardRef } from "react";
 import type { InformeFormData } from "./InformeDataForm";
-import type { ConsolidatedTotals } from "../types";
+import type { ConsolidatedTotals, DependenteInfo } from "../types";
 import { formatCurrency, centsToNumber } from "../utils/format";
 import { buildInformeValues } from "../utils/buildInformeValues";
+import type { ExtractedIdentification } from "../utils/extractIdentification";
 
 type Props = {
   formData: InformeFormData;
   totals: ConsolidatedTotals;
+  identification: ExtractedIdentification | undefined;
+  allDependents?: DependenteInfo[];
 };
 
 export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
-  ({ formData, totals }, ref) => {
+  ({ formData, totals, identification, allDependents = [] }, ref) => {
     // Funções auxiliares mantidas para consistência dos dados
     const informe = buildInformeValues(totals);
     const formatVal = (cents: number | undefined) => {
@@ -29,6 +32,56 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
       return `${day}/${month}/${year}`;
     };
 
+    const generateQ7Lines = () => {
+      const lines: string[] = [];
+
+      // 1. Contexto do 13º Salário (Conforme Imagem)
+      if (totals.vlrRendTrib13 > 0) {
+        const dedDep13 = allDependents.length * 18959; // 189,59 em centavos
+      }
+
+      // 2. Abono Pecuniário / Indenizações
+      if (totals.vlrAbonoPec > 0 || totals.vlrIndResContrato > 0) {
+        lines.push(
+          "OS RENDIMENTOS SEGUINTES ESTÃO INFORMADOS NA LINHA 07, QUADRO 4:",
+        );
+        if (totals.vlrAbonoPec > 0)
+          lines.push(`ABONO PECUNIÁRIO: R$ ${formatVal(totals.vlrAbonoPec)}`);
+        if (totals.vlrIndResContrato > 0)
+          lines.push(
+            `INDENIZAÇÃO RESCISÓRIA: R$ ${formatVal(totals.vlrIndResContrato)}`,
+          );
+        lines.push("");
+      }
+
+      if (totals.vlrIsenOutros > 0) {
+        lines.push(
+          "RENDIMENTOS ISENTOS E NÃO TRIBUTÁVEIS, INFORMADOS NA LINHA 09, QUADRO 4:",
+        );
+        lines.push(`Outros: R$ ${formatVal(totals.vlrIsenOutros)}`);
+        lines.push("");
+      }
+
+      // 3. Pensão Alimentícia Detalhada
+      if (totals.vlrDedPenAlim > 0 || totals.vlrDedPenAlimRRA > 0) {
+        lines.push("BENEFICIÁRIOS DE PENSÃO ALIMENTÍCIA:");
+        lines.push(
+          "CPF             NOME                                VLR. NORMAL   13º SALÁRIO",
+        );
+
+        // Aqui você filtraria apenas quem recebe pensão se tivesse essa flag,
+        // ou usa o total consolidado se for um beneficiário único
+        lines.push(
+          `${formatCpf(identification?.beneficiarioCpf || "")}  ${formData.beneficiario_nome.padEnd(30, " ")}  ${formatVal(totals.vlrDedPenAlim).padStart(12, " ")}  ${formatVal(totals.vlrDedPenAlimRRA).padStart(12, " ")}`,
+        );
+        lines.push("");
+      }
+
+      return lines;
+    };
+
+    const q7Lines = generateQ7Lines();
+
     // Estilos baseados no modelo HTML enviado
     const labelStyle = "block text-[6.5pt] mb-[1px] text-gray-700 uppercase";
     const valStyle = "font-bold text-[9pt] min-h-[12pt] block";
@@ -42,7 +95,7 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
       <div className="hidden">
         <div
           ref={ref}
-          className="bg-white text-black p-[20px] font-sans leading-tight w-[210mm] mx-auto print:block"
+          className="bg-white text-black p-5 font-sans leading-tight w-[210mm] mx-auto print:block"
           style={{ fontSize: "8pt" }}
         >
           <div className="border border-black">
@@ -69,7 +122,7 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
                 1. Fonte Pagadora Pessoa Jurídica ou Pessoa Física
               </div>
               <div className="flex">
-                <div className="border-r border-black p-1 w-[180px]">
+                <div className="border-r border-black p-1 w-45">
                   <span className={labelStyle}>CNPJ/CPF</span>
                   <span className={valStyle}>{formData.fonte_cnpj}</span>
                 </div>
@@ -88,10 +141,10 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
                 2. Pessoa Física Beneficiária dos Rendimentos
               </div>
               <div className="flex border-b border-black">
-                <div className="border-r border-black p-1 w-[180px]">
+                <div className="border-r border-black p-1 w-45">
                   <span className={labelStyle}>CPF</span>
                   <span className={valStyle}>
-                    {formatCpf(formData.beneficiario_cpf)}
+                    {formatCpf(identification?.beneficiarioCpf || "")}
                   </span>
                 </div>
                 <div className="p-1 flex-1">
@@ -101,7 +154,7 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
               </div>
               <div className="p-1">
                 <span className={labelStyle}>Natureza do Rendimento</span>
-                <span className={valStyle}>SALÁRIOS E PROVENTOS</span>
+                <span className={valStyle}></span>
               </div>
             </div>
 
@@ -274,7 +327,7 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
                   <span className={labelStyle}>Número do Processo</span>
                   <span className={valStyle}></span>
                 </div>
-                <div className="p-1 w-[120px]">
+                <div className="p-1 w-30">
                   <span className={labelStyle}>Qtd. Meses</span>
                   <span className={valStyle}></span>
                 </div>
@@ -318,9 +371,10 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
               <div className="bg-gray-200 font-bold px-2 py-1 border-b border-black text-[7.5pt]">
                 7. Informações Complementares
               </div>
-              <div className="p-2 min-h-[60px] text-[8pt] whitespace-pre-wrap uppercase">
-                {formData.q7_informacoes_complementares ||
-                  "Nenhuma informação complementar."}
+              <div className="p-2 min-h-25 text-[7pt] font-mono whitespace-pre-wrap uppercase leading-[1.2]">
+                {q7Lines.length > 0
+                  ? q7Lines.map((line, i) => <div key={i}>{line}</div>)
+                  : "Nenhuma informação complementar."}
               </div>
             </div>
 
@@ -330,7 +384,7 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
                 8. Responsável pelas Informações
               </div>
               <div className="flex">
-                <div className="border-r border-black p-1 flex-[2]">
+                <div className="border-r border-black p-1 flex-2">
                   <span className={labelStyle}>Nome</span>
                   <span className={valStyle}>
                     {formData.q8_responsavel_nome}

@@ -46,7 +46,6 @@ export async function generateInformePDF(
     // 2. Preencher Dados Cadastrais (Quadros 1, 2 e 8)
     fillField("fonte_cnpj", formData.fonte_cnpj);
     fillField("fonte_nome", formData.fonte_nome);
-    fillField("beneficiario_cpf", formData.beneficiario_cpf);
     fillField("beneficiario_nome", formData.beneficiario_nome);
     fillField("q8_responsavel_nome", formData.q8_responsavel_nome);
     fillField("q8_data", formatDateBR(formData.q8_data));

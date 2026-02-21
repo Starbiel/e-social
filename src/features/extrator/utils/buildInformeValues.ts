@@ -3,21 +3,10 @@ import type { ConsolidatedTotals } from "../types";
 export function buildInformeValues(totals: ConsolidatedTotals) {
   const outrosIsentos = (totals.vlrAbonoPec || 0) + (totals.vlrIsenOutros || 0);
 
-  console.log("Totais para Informe de Rendimentos:", {
-    ...totals,
-    outrosIsentos,
-  });
   const decimoTerceiroCalc =
     (totals.vlrRendTrib13 || 0) -
     (totals.vlrPrevOficial13 || 0) -
     (totals.vlrDedDep || 0);
-
-  console.log("Cálculo do 13º Salário:", {
-    vlrRendTrib13: totals.vlrRendTrib13,
-    vlrPrevOficial13: totals.vlrPrevOficial13,
-    vlrDedDep: totals.vlrDedDep,
-    decimoTerceiroCalc,
-  });
 
   let infoComp = "";
   if (totals.vlrDedDep > 0) {
