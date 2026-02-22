@@ -20,7 +20,15 @@ type InputFieldProps = {
   placeholder?: string;
   type?: string;
   maxLength?: number;
-  inputMode?: string;
+  inputMode?:
+    | "search"
+    | "text"
+    | "email"
+    | "tel"
+    | "url"
+    | "none"
+    | "numeric"
+    | "decimal";
   transformValue?: (value: string) => string;
   formData: InformeFormData;
   onChange: (field: keyof InformeFormData, value: string) => void;

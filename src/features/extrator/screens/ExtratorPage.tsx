@@ -26,8 +26,6 @@ export default function ExtratorPage() {
     setMode,
   } = useXmlConsolidator();
 
-  console.log("Identification:", identification);
-
   const [formData, setFormData] = useState<InformeFormData>({
     ano_calendario: new Date().getFullYear().toString(),
     fonte_cnpj: "",

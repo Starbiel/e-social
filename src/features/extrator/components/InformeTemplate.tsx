@@ -13,7 +13,7 @@ type Props = {
 };
 
 export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
-  ({ formData, totals, identification, allDependents = [] }, ref) => {
+  ({ formData, totals, identification }, ref) => {
     // Funções auxiliares mantidas para consistência dos dados
     const informe = buildInformeValues(totals);
     const formatVal = (cents: number | undefined) => {
@@ -34,11 +34,6 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
 
     const generateQ7Lines = () => {
       const lines: string[] = [];
-
-      // 1. Contexto do 13º Salário (Conforme Imagem)
-      if (totals.vlrRendTrib13 > 0) {
-        const dedDep13 = allDependents.length * 18959; // 189,59 em centavos
-      }
 
       // 2. Abono Pecuniário / Indenizações
       if (totals.vlrAbonoPec > 0 || totals.vlrIndResContrato > 0) {

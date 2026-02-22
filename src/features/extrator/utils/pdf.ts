@@ -95,7 +95,9 @@ export async function generateInformePDF(
     const pdfBytes = await pdfDoc.save();
 
     // 7. Disparar o download
-    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const blob = new Blob([new Uint8Array(pdfBytes)], {
+      type: "application/pdf",
+    });
     const blobUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = blobUrl;
