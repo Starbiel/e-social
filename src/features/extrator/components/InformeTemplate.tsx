@@ -14,7 +14,7 @@ type Props = {
 };
 
 export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
-  ({ formData, totals, identification }, ref) => {
+  ({ formData, totals, identification, allDependents }, ref) => {
     // Funções auxiliares mantidas para consistência dos dados
     const informe = buildInformeValues(totals);
     const formatVal = (cents: number | undefined) => {
@@ -37,10 +37,6 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
       const lines: string[] = [];
 
       // 1. Informações sobre RRA (Quadro 1, Quadro 3)
-      /*
-      Os rendimentos seguintes estão informados na linha 01, quadro 3 e/ou linha 03, quadro 05:
-0561 Rendimentos do Trabalho Assalariado R$ 23.492,82
-*/
       if (informe.q3.totalRendimentos > 0) {
         lines.push(
           "OS RENDIMENTOS SEGUINTES ESTÃO INFORMADOS NA LINHA 01, QUADRO 3:",
@@ -74,17 +70,27 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
       }
 
       // 3. Pensão Alimentícia Detalhada
-      if (totals.vlrDedPenAlim > 0 || totals.vlrDedPenAlimRRA > 0) {
+      if (
+        totals.vlrDedPenAlim > 0 ||
+        totals.vlrDedPenAlimRRA > 0 ||
+        (allDependents && allDependents.length > 0)
+      ) {
         lines.push("BENEFICIÁRIOS DE PENSÃO ALIMENTÍCIA:");
         lines.push(
-          "CPF             NOME                                VLR. NORMAL   13º SALÁRIO",
+          "CPF             NOME                             VLR. NORMAL   13º SALÁRIO",
         );
+        allDependents?.forEach((dep: DependenteInfo) => {
+          const cpfFormatado = formatCpf(dep.cpf).padEnd(15, " ");
+          const nomeFormatado = dep.nome
+            .toUpperCase()
+            .substring(0, 30)
+            .padEnd(30, " ");
+          const vlrNormal = formatVal(dep.valorDeducao).padStart(12, " ");
+          const vlr13 = formatVal(0).padStart(12, " "); // Caso tenha o campo de 13º no tipo, troque o 0 por ele
 
-        // Aqui você filtraria apenas quem recebe pensão se tivesse essa flag,
-        // ou usa o total consolidado se for um beneficiário único
-        lines.push(
-          `${formatCpf(identification?.beneficiarioCpf || "")}  ${formData.beneficiario_nome.padEnd(30, " ")}  ${formatVal(totals.vlrDedPenAlim).padStart(12, " ")}  ${formatVal(totals.vlrDedPenAlimRRA).padStart(12, " ")}`,
-        );
+          lines.push(`${cpfFormatado} ${nomeFormatado} ${vlrNormal} ${vlr13}`);
+        });
+
         lines.push("");
       }
 

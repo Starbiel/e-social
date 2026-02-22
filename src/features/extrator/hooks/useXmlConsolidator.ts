@@ -98,21 +98,39 @@ function extractAccountantDmDev(doc: Document): ConsolidatedTotals {
   extractDetailedData(doc, totals);
   return totals;
 }
-
 function extractDependents(doc: Document): DependenteInfo[] {
   const deps: DependenteInfo[] = [];
-  const depNodes = Array.from(doc.getElementsByTagName("dep"));
 
-  depNodes.forEach((node) => {
+  // 1. No seu XML a tag correta é 'ideDep'
+  const ideDepNodes = Array.from(doc.getElementsByTagName("ideDep"));
+
+  ideDepNodes.forEach((node) => {
+    const cpf = node.getElementsByTagName("cpfDep")[0]?.textContent || "";
+    const infoIRCR = doc.getElementsByTagName("infoIRCR")[0];
+    let valorDeducao = 0;
+
+    if (infoIRCR) {
+      const penNodes = Array.from(infoIRCR.getElementsByTagName("penAlim"));
+
+      const penDoDependente = penNodes.find(
+        (p) => p.getElementsByTagName("cpfDep")[0]?.textContent === cpf,
+      );
+
+      if (penDoDependente) {
+        valorDeducao = decimalStringToCents(
+          penDoDependente.getElementsByTagName("vlrDedPenAlim")[0]?.textContent,
+        );
+      }
+    }
+
     deps.push({
-      nome: node.getElementsByTagName("nmDep")[0]?.textContent || "",
-      cpf: node.getElementsByTagName("cpfDep")[0]?.textContent || "",
+      nome: node.getElementsByTagName("nome")[0]?.textContent || "",
+      cpf: cpf,
       tipo: node.getElementsByTagName("tpDep")[0]?.textContent || "",
-      valorDeducao: decimalStringToCents(
-        node.getElementsByTagName("vlrDedDep")[0]?.textContent,
-      ),
+      valorDeducao: valorDeducao,
     });
   });
+
   return deps;
 }
 
@@ -187,6 +205,7 @@ export function useXmlConsolidator() {
           ? extractOfficial(doc)
           : extractAccountantDmDev(doc);
       const dependents = extractDependents(doc);
+      console.log("Dependentes extraídos:", dependents); // Log para verificar dependentes
       const identification = extractIdentification(doc);
 
       return {
