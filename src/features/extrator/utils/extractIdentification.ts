@@ -3,10 +3,16 @@ export type ExtractedIdentification = {
   fonteTipo?: "CNPJ" | "CPF";
   beneficiarioCpf?: string;
   anoCalendario?: string;
+  darfBenCode?: string;
 };
 
 export function extractIdentification(doc: Document): ExtractedIdentification {
   const empregador = doc.getElementsByTagName("ideEmpregador")[0];
+
+  const consolidado = doc.getElementsByTagName("consolidApurMen")[0];
+  const darfCode = consolidado
+    ?.getElementsByTagName("CRMen")[0]
+    ?.textContent?.substring(0, 4);
   const trabalhador = doc.getElementsByTagName("ideTrabalhador")[0];
 
   const tpInsc =
@@ -30,5 +36,6 @@ export function extractIdentification(doc: Document): ExtractedIdentification {
     fonteTipo: tpInsc === "1" ? "CNPJ" : tpInsc === "2" ? "CPF" : undefined,
     beneficiarioCpf: cpfBenef || undefined,
     anoCalendario,
+    darfBenCode: darfCode || undefined,
   };
 }

@@ -46,7 +46,7 @@ function extractAccountantDmDev(doc: Document): ConsolidatedTotals {
     "vlrAbonoPec",
     "vlrIndResContrato",
     "vlrJurosMora",
-    "vlrIsenOutros", // vlrIsenOutros incluído aqui
+    "vlrIsenOutros",
   ];
 
   for (const dmDev of dmDevNodes) {

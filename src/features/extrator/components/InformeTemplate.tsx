@@ -4,6 +4,7 @@ import type { ConsolidatedTotals, DependenteInfo } from "../types";
 import { formatCurrency, centsToNumber } from "../utils/format";
 import { buildInformeValues } from "../utils/buildInformeValues";
 import type { ExtractedIdentification } from "../utils/extractIdentification";
+import { darfCodesMap } from "../config/darfCodesMap";
 
 type Props = {
   formData: InformeFormData;
@@ -34,6 +35,21 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
 
     const generateQ7Lines = () => {
       const lines: string[] = [];
+
+      // 1. Informações sobre RRA (Quadro 1, Quadro 3)
+      /*
+      Os rendimentos seguintes estão informados na linha 01, quadro 3 e/ou linha 03, quadro 05:
+0561 Rendimentos do Trabalho Assalariado R$ 23.492,82
+*/
+      if (informe.q3.totalRendimentos > 0) {
+        lines.push(
+          "OS RENDIMENTOS SEGUINTES ESTÃO INFORMADOS NA LINHA 01, QUADRO 3:",
+        );
+        lines.push(
+          `${identification?.darfBenCode} - ${darfCodesMap[identification?.darfBenCode || ""] || "Não identificado"} - R$ ${formatVal(informe.q3.totalRendimentos)}`,
+        );
+        lines.push("");
+      }
 
       // 2. Abono Pecuniário / Indenizações
       if (totals.vlrAbonoPec > 0 || totals.vlrIndResContrato > 0) {
@@ -149,7 +165,10 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
               </div>
               <div className="p-1">
                 <span className={labelStyle}>Natureza do Rendimento</span>
-                <span className={valStyle}></span>
+                <span className={valStyle}>
+                  {darfCodesMap[identification?.darfBenCode || ""] ||
+                    "Não identificado"}
+                </span>
               </div>
             </div>
 
