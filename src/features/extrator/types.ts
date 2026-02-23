@@ -19,6 +19,7 @@ export type ConsolidatedTotals = {
   vlrRendTrib13: number;
   vlrPrevOficial13: number;
   vlrCR13Men: number;
+  vlrDedDep13: number;
 
   // Isentos
   vlrParcIsenta65: number;

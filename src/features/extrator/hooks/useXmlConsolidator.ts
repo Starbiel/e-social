@@ -135,16 +135,27 @@ function extractDependents(doc: Document): DependenteInfo[] {
 }
 
 function extractDetailedData(doc: Document, totals: ConsolidatedTotals) {
-  // 1. Extração de Pensão Alimentícia (Quadro 3, Linha 4)
+  // 1. Pensão Alimentícia
   const penAlimNodes = Array.from(doc.getElementsByTagName("vlrDedPenAlim"));
   penAlimNodes.forEach((node) => {
     totals.vlrDedPenAlim += decimalStringToCents(node.textContent);
   });
 
-  // 2. Extração de Dedução por Dependente (Informativo para o Quadro 7)
-  const depNodes = Array.from(doc.getElementsByTagName("vlrDedDep"));
-  depNodes.forEach((node) => {
-    totals.vlrDedDep += decimalStringToCents(node.textContent);
+  // 2. Dedução por Dependente separando mensal e 13º
+  const dedDepenNodes = Array.from(doc.getElementsByTagName("dedDepen"));
+
+  dedDepenNodes.forEach((node) => {
+    const tpRend = node.getElementsByTagName("tpRend")[0]?.textContent;
+    const valor = decimalStringToCents(
+      node.getElementsByTagName("vlrDedDep")[0]?.textContent,
+    );
+
+    if (tpRend === "12") {
+      totals.vlrDedDep13 += valor;
+      totals.vlrDedDep += valor;
+    } else {
+      totals.vlrDedDep += valor;
+    }
   });
 }
 
@@ -205,7 +216,6 @@ export function useXmlConsolidator() {
           ? extractOfficial(doc)
           : extractAccountantDmDev(doc);
       const dependents = extractDependents(doc);
-      console.log("Dependentes extraídos:", dependents); // Log para verificar dependentes
       const identification = extractIdentification(doc);
 
       return {

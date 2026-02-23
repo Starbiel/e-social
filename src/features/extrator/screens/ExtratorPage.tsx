@@ -27,7 +27,7 @@ export default function ExtratorPage() {
   } = useXmlConsolidator();
 
   const [formData, setFormData] = useState<InformeFormData>({
-    ano_calendario: new Date().getFullYear().toString(),
+    ano_calendario: new Date().getFullYear() - 1 + "",
     fonte_cnpj: "",
     fonte_nome: "",
     beneficiario_nome: "",

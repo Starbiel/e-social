@@ -79,6 +79,7 @@ export function createEmptyTotals(): ConsolidatedTotals {
     vlrCRRRA: 0,
     vlrDespJudRRA: 0,
     qtdMesesRRA: 0,
+    vlrDedDep13: 0,
   };
 }
 

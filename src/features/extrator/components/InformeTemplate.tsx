@@ -71,9 +71,9 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
 
       // 3. Pensão Alimentícia Detalhada
       if (
-        totals.vlrDedPenAlim > 0 ||
-        totals.vlrDedPenAlimRRA > 0 ||
-        (allDependents && allDependents.length > 0)
+        allDependents &&
+        allDependents.length > 0 &&
+        allDependents.some((dep) => dep.valorDeducao > 0)
       ) {
         lines.push("BENEFICIÁRIOS DE PENSÃO ALIMENTÍCIA:");
         lines.push(
