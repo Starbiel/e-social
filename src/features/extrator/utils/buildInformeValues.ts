@@ -6,7 +6,8 @@ export function buildInformeValues(totals: ConsolidatedTotals) {
   const decimoTerceiroCalc =
     (totals.vlrRendTrib13 || 0) -
     (totals.vlrPrevOficial13 || 0) -
-    (totals.vlrDedDep || 0);
+    (totals.vlrDedDep || 0) -
+    (totals.vlrCR13Men || 0);
 
   let infoComp = "";
   if (totals.vlrDedDep > 0) {

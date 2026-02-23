@@ -112,7 +112,7 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
       <div className="hidden">
         <div
           ref={ref}
-          className="bg-white text-black p-5 font-sans leading-tight w-[210mm] mx-auto print:block"
+          className="bg-white text-black p-5 font-sans leading-tight w-[210mm] min-h-[297mm] mx-auto print:block"
           style={{ fontSize: "8pt" }}
         >
           <div className="border border-black">
