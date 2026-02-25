@@ -39,7 +39,7 @@ export function buildInformeValues(totals: ConsolidatedTotals) {
     },
 
     q5: {
-      decimoTerceiro: decimoTerceiroCalc || 0,
+      decimoTerceiro: (decimoTerceiroCalc > 0 ? decimoTerceiroCalc : 0) || 0,
       irrfDecimo: totals.vlrCR13Men || 0,
       outros: 0,
     },
