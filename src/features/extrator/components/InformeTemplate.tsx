@@ -1,7 +1,11 @@
 import { forwardRef } from "react";
 import type { InformeFormData } from "./InformeDataForm";
-import type { ConsolidatedTotals, DependenteInfo } from "../types";
-import { formatCurrency, centsToNumber } from "../utils/format";
+import type {
+  ConsolidatedTotals,
+  DependenteInfo,
+  HealthPlanInfo,
+} from "../types";
+import { formatCurrency, centsToNumber, formatCnpj } from "../utils/format";
 import { buildInformeValues } from "../utils/buildInformeValues";
 import type { ExtractedIdentification } from "../utils/extractIdentification";
 import { darfCodesMap } from "../config/darfCodesMap";
@@ -11,10 +15,11 @@ type Props = {
   totals: ConsolidatedTotals;
   identification: ExtractedIdentification | undefined;
   allDependents?: DependenteInfo[];
+  healthPlan: HealthPlanInfo | undefined;
 };
 
 export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
-  ({ formData, totals, identification, allDependents }, ref) => {
+  ({ formData, totals, identification, allDependents, healthPlan }, ref) => {
     // Funções auxiliares mantidas para consistência dos dados
     const informe = buildInformeValues(totals);
     const formatVal = (cents: number | undefined) => {
@@ -44,7 +49,7 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
         lines.push(
           `${identification?.darfBenCode} - ${darfCodesMap[identification?.darfBenCode || ""] || "Não identificado"} - R$ ${formatVal(informe.q3.totalRendimentos)}`,
         );
-        lines.push("");
+        lines.push(" ");
       }
 
       // 2. Abono Pecuniário / Indenizações
@@ -58,7 +63,7 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
           lines.push(
             `INDENIZAÇÃO RESCISÓRIA: R$ ${formatVal(totals.vlrIndResContrato)}`,
           );
-        lines.push("");
+        lines.push(" ");
       }
 
       if (totals.vlrIsenOutros > 0) {
@@ -66,7 +71,35 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
           "RENDIMENTOS ISENTOS E NÃO TRIBUTÁVEIS, INFORMADOS NA LINHA 09, QUADRO 4:",
         );
         lines.push(`Outros: R$ ${formatVal(totals.vlrIsenOutros)}`);
-        lines.push("");
+        lines.push(" ");
+      }
+
+      if (healthPlan) {
+        lines.push("Pagamentos a planos de saúde:");
+        lines.push(`Operadora: ${formatCnpj(healthPlan.cnpjOper)}`);
+        lines.push(
+          `Valor pago no ano referente ao titular: R$ ${formatVal(healthPlan.vlrSaudeTit)}`,
+        );
+        lines.push(" ");
+
+        if (healthPlan.dependents.length > 0) {
+          lines.push("Valor pago no ano referente aos dependentes:");
+          lines.push("CPF             Nome                             Valor");
+
+          healthPlan.dependents.forEach((dpPlan) => {
+            const depGeral = allDependents?.find((d) => d.cpf === dpPlan.cpf);
+            const nome = (
+              depGeral?.nome || "DEPENDENTE NÃO IDENTIFICADO"
+            ).toUpperCase();
+
+            const cpfFmt = formatCpf(dpPlan.cpf).padEnd(15, " ");
+            const nomeFmt = nome.substring(0, 32).padEnd(32, " ");
+            const vlrFmt = formatVal(dpPlan.valor).padStart(12, " ");
+
+            lines.push(`${cpfFmt} ${nomeFmt} ${vlrFmt}`);
+          });
+          lines.push(" ");
+        }
       }
 
       // 3. Pensão Alimentícia Detalhada
@@ -91,7 +124,7 @@ export const InformeTemplate = forwardRef<HTMLDivElement, Props>(
           lines.push(`${cpfFormatado} ${nomeFormatado} ${vlrNormal} ${vlr13}`);
         });
 
-        lines.push("");
+        lines.push(" ");
       }
 
       return lines;

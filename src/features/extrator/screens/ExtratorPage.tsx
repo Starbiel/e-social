@@ -24,6 +24,7 @@ export default function ExtratorPage() {
     exportPayload,
     mode,
     setMode,
+    healthPlan,
   } = useXmlConsolidator();
 
   const [formData, setFormData] = useState<InformeFormData>({
@@ -79,6 +80,7 @@ export default function ExtratorPage() {
           totals={totals}
           identification={identification}
           allDependents={allDependents}
+          healthPlan={healthPlan}
         />
 
         {/* Botões Inferiores */}

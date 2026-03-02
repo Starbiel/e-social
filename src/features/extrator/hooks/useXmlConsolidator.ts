@@ -11,6 +11,8 @@ import type {
   ConsolidationSummary,
   DependenteInfo,
   FileConsolidationResult,
+  HealthPlanDep,
+  HealthPlanInfo,
 } from "../types";
 import {
   extractIdentification,
@@ -98,6 +100,7 @@ function extractAccountantDmDev(doc: Document): ConsolidatedTotals {
   extractDetailedData(doc, totals);
   return totals;
 }
+
 function extractDependents(doc: Document): DependenteInfo[] {
   const deps: DependenteInfo[] = [];
 
@@ -132,6 +135,31 @@ function extractDependents(doc: Document): DependenteInfo[] {
   });
 
   return deps;
+}
+
+function extractHealthPlan(doc: Document): HealthPlanInfo | undefined {
+  const planNode = doc.getElementsByTagName("planSaude")[0];
+  if (!planNode) return undefined;
+
+  const cnpjOper =
+    planNode.getElementsByTagName("cnpjOper")[0]?.textContent || "";
+  const vlrSaudeTit = decimalStringToCents(
+    planNode.getElementsByTagName("vlrSaudeTit")[0]?.textContent,
+  );
+
+  const deps: HealthPlanDep[] = [];
+  const depNodes = Array.from(planNode.getElementsByTagName("infoDepSau"));
+
+  depNodes.forEach((node) => {
+    deps.push({
+      cpf: node.getElementsByTagName("cpfDep")[0]?.textContent || "",
+      valor: decimalStringToCents(
+        node.getElementsByTagName("vlrSaudeDep")[0]?.textContent,
+      ),
+    });
+  });
+
+  return { cnpjOper, vlrSaudeTit, dependents: deps };
 }
 
 function extractDetailedData(doc: Document, totals: ConsolidatedTotals) {
@@ -194,6 +222,7 @@ export function useXmlConsolidator() {
     errors: [],
     identification: undefined,
     allDependents: [],
+    healthPlan: undefined,
   });
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -217,12 +246,14 @@ export function useXmlConsolidator() {
           : extractAccountantDmDev(doc);
       const dependents = extractDependents(doc);
       const identification = extractIdentification(doc);
+      const healthPlan = extractHealthPlan(doc);
 
       return {
         fileName: file.name,
         totals,
         identification,
-        dependents, // Agora preenchido
+        dependents,
+        healthPlan,
         hasData: Object.values(totals).some((v) => v !== 0),
       };
     },
@@ -245,19 +276,34 @@ export function useXmlConsolidator() {
         const allDepsAcc: DependenteInfo[] = []; // CORREÇÃO: Acumulador criado
         let globalTotals = createEmptyTotals();
         let identificationGlobal: ExtractedIdentification | undefined;
+        let globalHealthPlan: HealthPlanInfo | undefined;
 
         for (const res of results) {
           if (res.status === "fulfilled") {
-            processedFiles.push(res.value);
-            globalTotals = mergeTotals(globalTotals, res.value.totals);
+            const val = res.value;
+            processedFiles.push(val);
+            globalTotals = mergeTotals(globalTotals, val.totals);
 
-            // CORREÇÃO: Acumula dependentes de todos os arquivos
-            if (res.value.dependents) {
-              allDepsAcc.push(...res.value.dependents);
-            }
+            if (val.dependents) allDepsAcc.push(...val.dependents);
+            if (!identificationGlobal && val.identification)
+              identificationGlobal = val.identification;
 
-            if (!identificationGlobal && res.value.identification) {
-              identificationGlobal = res.value.identification;
+            // Lógica de Consolidação do Plano de Saúde
+            if (val.healthPlan) {
+              if (!globalHealthPlan) {
+                globalHealthPlan = JSON.parse(JSON.stringify(val.healthPlan));
+              } else if (
+                globalHealthPlan.cnpjOper === val.healthPlan.cnpjOper
+              ) {
+                globalHealthPlan.vlrSaudeTit += val.healthPlan.vlrSaudeTit;
+                val.healthPlan.dependents.forEach((newDep) => {
+                  const existing = globalHealthPlan!.dependents.find(
+                    (d) => d.cpf === newDep.cpf,
+                  );
+                  if (existing) existing.valor += newDep.valor;
+                  else globalHealthPlan!.dependents.push({ ...newDep });
+                });
+              }
             }
           } else {
             errors.push(
@@ -278,7 +324,8 @@ export function useXmlConsolidator() {
           files: processedFiles,
           errors,
           identification: identificationGlobal,
-          allDependents: uniqueDeps, // CORREÇÃO: Agora a variável existe
+          allDependents: uniqueDeps,
+          healthPlan: globalHealthPlan,
         });
       } finally {
         setIsProcessing(false);
@@ -321,6 +368,7 @@ export function useXmlConsolidator() {
         files: [],
         errors: [],
         allDependents: [],
+        healthPlan: undefined,
       }),
   };
 }

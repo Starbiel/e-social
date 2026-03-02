@@ -49,12 +49,24 @@ export type ConsolidatedTotals = {
   qtdMesesRRA: number;
 };
 
+export type HealthPlanDep = {
+  cpf: string;
+  valor: number;
+};
+
+export type HealthPlanInfo = {
+  cnpjOper: string;
+  vlrSaudeTit: number;
+  dependents: HealthPlanDep[];
+};
+
 export type FileConsolidationResult = {
   fileName: string;
   totals: ConsolidatedTotals;
   hasData: boolean;
   identification?: ExtractedIdentification;
   dependents: DependenteInfo[];
+  healthPlan?: HealthPlanInfo;
 };
 
 export type ConsolidationSummary = {
@@ -62,5 +74,6 @@ export type ConsolidationSummary = {
   files: FileConsolidationResult[];
   errors: string[];
   identification?: ExtractedIdentification;
+  healthPlan?: HealthPlanInfo;
   allDependents: DependenteInfo[];
 };
